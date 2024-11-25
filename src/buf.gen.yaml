@@ -1,0 +1,9 @@
+version: v2
+plugins:
+  - local: protoc-gen-js
+    out: gen
+    opt:
+      - import_style=commonjs,binary
+  - local: ../node_modules/.bin/protoc-gen-ts
+    out: gen
+    
