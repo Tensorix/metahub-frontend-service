@@ -1,4 +1,5 @@
 import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
+import { CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
@@ -7,7 +8,8 @@ export default class User {
     public username: string
     public password: string | undefined
     public token: string | undefined
-    public baseUrl: string = "http://localhost:8080"
+    private baseUrl: string = "http://localhost:8080"
+
     constructor(cookie:{[x: string]: string});
     constructor(username: string,password: string);
     constructor(userOrCookie: string | {[x: string]: string}, password?: string){
