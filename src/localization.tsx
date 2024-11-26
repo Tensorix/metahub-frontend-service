@@ -16,7 +16,10 @@ export abstract class Localization {
         en: "English",
         save: "Save",
         save_success: "Save success",
-        restore_to_default: "Restore to default"
+        restore_to_default: "Restore to default",
+        network_error: "Network error",
+        inbox: "Inbox",
+        status: "Status"
     }
 
     public static zh = {
@@ -36,7 +39,10 @@ export abstract class Localization {
         en: "英语",
         save: "保存",
         save_success: "保存成功",
-        restore_to_default: "恢复默认设置"
+        restore_to_default: "恢复默认设置",
+        network_error: "网络错误",
+        inbox: "收件箱",
+        status: "状态"
     }
 
     public static getLangData(cookie: { [x: string]: string }) {
