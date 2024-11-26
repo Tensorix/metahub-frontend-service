@@ -10,15 +10,15 @@ interface ContactbarProp {
 
 export const Contactbar: React.FC<ContactbarProp> = ({ inbox, isLogin }) => {
     return (
-        <Menu className="flex flex-row justify-center">
+        <Menu className="flex flex-row justify-center w-full" responsive={true}>
             <Menu.Item>
                 <Button color="ghost">
-                    <MdInbox /><FormattedMessage id='inbox'/>: <Badge>{inbox>99?"99+":inbox}</Badge>
+                    <MdInbox /><FormattedMessage id='inbox' />: <Badge>{inbox > 99 ? "99+" : inbox}</Badge>
                 </Button>
             </Menu.Item>
             <Menu.Item>
                 <Button color="ghost">
-                    <MdInfo /> <FormattedMessage id='status'/>: <Badge size="xs" color={isLogin?"success":"error"} />
+                    <MdInfo /><FormattedMessage id='status' />: <Badge size="xs" color={isLogin ? "success" : "error"} />
                 </Button>
             </Menu.Item>
         </Menu>
