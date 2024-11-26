@@ -1,19 +1,13 @@
-import { Button, Mask, Menu, Navbar } from "react-daisyui"
-import { MdHome, MdLogout, MdSettings } from "react-icons/md"
+import { Button, Menu } from "react-daisyui"
+import { MdHome, MdSettings } from "react-icons/md"
 import { useNavigate } from "react-router"
-import { Logo } from "./logo"
-import User from "@/componments/user"
-import { useCookies } from "react-cookie"
 
-interface NavBarProp {
+interface MenubarProp {
     children: JSX.Element
 }
 
-export const NavBar: React.FC<NavBarProp> = ({ children }) => {
+export const Menubar: React.FC<MenubarProp> = ({ children }) => {
     const navigate = useNavigate()
-    const [cookie, setCookie] = useCookies()
-    const user = new User(cookie)
-    const isLogin = user.username != ""
 
     return (
         <div className="flex flex-row h-screen">
@@ -29,7 +23,7 @@ export const NavBar: React.FC<NavBarProp> = ({ children }) => {
                     </Button>
                 </Menu.Item>
             </Menu>
-            <div className="w-full">
+            <div className="flex flex-col w-full">
                 {children}
             </div>
         </div>
