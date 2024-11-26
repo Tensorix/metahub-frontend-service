@@ -1,27 +1,38 @@
 import { Button, Menu } from "react-daisyui"
 import { MdHome, MdSettings } from "react-icons/md"
-import { useNavigate } from "react-router"
+import { useLocation, useNavigate } from "react-router"
 
 interface MenubarProp {
     children: JSX.Element
 }
 
+interface PathInfo {
+    pathname: string
+    icon: JSX.Element
+}
+
 export const Menubar: React.FC<MenubarProp> = ({ children }) => {
     const navigate = useNavigate()
-
+    const location = useLocation()
+    const pathname = location.pathname
+    const info: PathInfo[] = [
+        {
+            pathname: "/",
+            icon: <MdHome />
+        }, {
+            pathname: "/settings",
+            icon: <MdSettings />
+        }]
     return (
         <div className="flex flex-row h-screen">
             <Menu>
-                <Menu.Item>
-                    <Button className='text-xl' color="ghost" onClick={() => { navigate("/") }}>
-                        <MdHome />
-                    </Button>
-                </Menu.Item>
-                <Menu.Item>
-                    <Button className='text-xl' color="ghost" onClick={() => { navigate("/settings") }}>
-                        <MdSettings />
-                    </Button>
-                </Menu.Item>
+                {info.map((element, i) =>
+                    <Menu.Item key={i}>
+                        <Button className='text-xl' color={element.pathname == pathname ? "neutral": "ghost"} onClick={() => { navigate(element.pathname) }}>
+                            {element.icon}
+                        </Button>
+                    </Menu.Item>
+                )}
             </Menu>
             <div className="flex flex-col w-full">
                 {children}
