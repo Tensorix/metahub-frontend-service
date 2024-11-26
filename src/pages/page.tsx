@@ -7,13 +7,13 @@ function HomePage() {
     const [cookies, _] = useCookies()
     const user = new User(cookies)
     const navigate = useNavigate()
-    if(user.username == undefined || user.token == undefined){
-        useEffect(()=>{navigate("/auth/login")})
-        return (<></>)
-    }
+    useEffect(()=>{
+        user.AuthCheck(navigate)
+    })
+
     return (
         <div>
-            {cookies.username && <h1>Hello {cookies.username}!</h1>}
+            <h1>Hello {user.username}!</h1>
         </div>
     );
 

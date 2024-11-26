@@ -1,8 +1,9 @@
 import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
-import { CheckResult } from "@/gen/proto/v1/auth/check"
+import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
+import { NavigateFunction } from "react-router"
 
 export default class User {
     public username: string
@@ -48,6 +49,7 @@ export default class User {
         }
         return result
     }
+
     public async Register(): Promise<RegisterResult>{
         if(this.password == undefined){
             return RegisterResult.VALUE_NULL
@@ -59,5 +61,33 @@ export default class User {
         const request: RegisterRequest = { username: this.username, password: this.password }
         const { response } = await client.register(request)
         return response.result
+    }
+    
+    public AuthCheck(navigate :NavigateFunction){
+        if(this.token == undefined){
+            navigate("/auth/login")
+            return
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        });
+        const client = new AuthServiceClient(transport)
+        const request: CheckRequest = {token: this.token}
+        client.check(request).then(({response})=>{
+            const result = response.result
+            let redirect = true
+            switch (result) {
+                case CheckResult.UNSPECIFIED:
+                    break
+                case CheckResult.SUCCESS:
+                    redirect = false
+                    break
+                case CheckResult.FAILED:
+                    break
+            }
+            if(redirect){
+                navigate("/auth/login")
+            }
+        })
     }
 }
