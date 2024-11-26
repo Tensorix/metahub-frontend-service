@@ -21,7 +21,3 @@ export const LoInput: React.FC<LoInputProps> = ({ type, label, value, setValue }
         </div>
     );
 };
-
-
-
-

@@ -36,7 +36,7 @@ function SettingsPage() {
     return (
         <div className="w-full flex items-center justify-center h-screen">
             <div className="flex items-center flex-col space-y-2 w-1/6">
-                <Logo size="normal" variant="squircle"/>
+                <Logo size="normal" variant="squircle" />
                 <LoLabel size="text-4xl" value="settings" />
                 <LoSelect options={languages} label="language" value={selLang} setValue={setSelLang} />
                 <Join>
@@ -50,4 +50,3 @@ function SettingsPage() {
 }
 
 export default SettingsPage
-

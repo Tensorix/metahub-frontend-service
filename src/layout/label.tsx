@@ -15,6 +15,3 @@ export const LoLabel: React.FC<LoLabelProp> = ({ size, value }) => {
         </div>
     );
 };
-
-
-

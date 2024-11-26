@@ -21,5 +21,3 @@ export const LoToast: React.FC<LoToastProp> = ({ value, setValue }) => {
         </>
     );
 };
-
-
