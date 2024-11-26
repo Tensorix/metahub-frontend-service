@@ -34,7 +34,7 @@ export const Menubar: React.FC<MenubarProp> = ({ children }) => {
                     </Menu.Item>
                 )}
             </Menu>
-            <div className="flex flex-col w-full">
+            <div className="w-full">
                 {children}
             </div>
         </div>
