@@ -3,6 +3,7 @@ import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
+import { Dispatch, SetStateAction } from "react"
 import { NavigateFunction } from "react-router"
 
 export default class User {
@@ -63,7 +64,7 @@ export default class User {
         return response.result
     }
     
-    public AuthCheck(navigate :NavigateFunction){
+    public AuthCheck(setToast: Dispatch<SetStateAction<string>>,navigate :NavigateFunction){
         if(this.token == undefined){
             navigate("/auth/login")
             return
@@ -73,7 +74,12 @@ export default class User {
         });
         const client = new AuthServiceClient(transport)
         const request: CheckRequest = {token: this.token}
-        client.check(request).then(({response})=>{
+        let response = client.check(request)
+        response.status.catch((e)=>{
+            setToast("network_error")
+            return
+        })
+        response.then(({response})=>{
             const result = response.result
             let redirect = true
             switch (result) {
