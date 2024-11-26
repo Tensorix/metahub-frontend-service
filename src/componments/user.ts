@@ -2,7 +2,6 @@ import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
-import { NavigateFunction } from "react-router"
 
 export default class User {
     public username: string
@@ -11,18 +10,19 @@ export default class User {
     public baseUrl: string = "http://localhost:8080"
     constructor(cookie:{[x: string]: string});
     constructor(username: string,password: string);
-    constructor(userOrToken: string | {[x: string]: string}, password?: string){
-        if (typeof userOrToken == 'string' && password != undefined) {
-            const username: string = userOrToken
+    constructor(userOrCookie: string | {[x: string]: string}, password?: string){
+        if (typeof userOrCookie == 'string' && password != undefined) {
+            const username: string = userOrCookie
             this.username = username
             this.password = password
             return
         }
-        const cookie = userOrToken as {[x: string]: string}
+        const cookie = userOrCookie as {[x: string]: string}
         const username = cookie["username"]
         const token  = cookie["token"]
-        if(username == undefined || username == "undefined" || token == undefined || token == "undefined"){
+        if(username == undefined || token == undefined || token == "undefined"){
             this.username = ""
+            this.token = undefined
             return
         }
         this.username = username
