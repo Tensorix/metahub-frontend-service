@@ -19,7 +19,8 @@ export abstract class Localization {
         restore_to_default: "Restore to default",
         network_error: "Network error",
         inbox: "Inbox",
-        status: "Status"
+        status: "Status",
+        connection_timeout: "Connection timeout"
     }
 
     public static zh = {
@@ -42,7 +43,8 @@ export abstract class Localization {
         restore_to_default: "恢复默认设置",
         network_error: "网络错误",
         inbox: "收件箱",
-        status: "状态"
+        status: "状态",
+        connection_timeout: "连接超时"
     }
 
     public static getLangData(cookie: { [x: string]: string }) {

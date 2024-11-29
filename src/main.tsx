@@ -12,7 +12,7 @@ import SettingsPage from './pages/settings/page'
 import { LoIntl } from './layout/intl'
 
 createRoot(document.getElementById('root')!).render(
-    <StrictMode>
+    // <StrictMode>
         <CookiesProvider defaultSetOptions={{ path: '/', sameSite: 'strict' }}>
             <LoIntl>
                 <BrowserRouter>
@@ -25,5 +25,5 @@ createRoot(document.getElementById('root')!).render(
                 </BrowserRouter>
             </LoIntl>
         </CookiesProvider>
-    </StrictMode>
+    // </StrictMode>
 )
