@@ -3,21 +3,22 @@ import { Input } from 'react-daisyui'
 import { FormattedMessage } from 'react-intl'
 
 interface LoInputProps {
+    className?: string | undefined
     type?: React.HTMLInputTypeAttribute
     label: string
     value: string
     setValue: React.Dispatch<React.SetStateAction<string>>
 }
 
-export const LoInput: React.FC<LoInputProps> = ({ type, label, value, setValue }) => {
+export const LoInput: React.FC<LoInputProps> = ({ className, type, label, value, setValue }) => {
     return (
-        <div className="form-control w-full max-w-xs">
+        <div className="w-full">
             <label className="label">
                 <span className="label-text">
                     <FormattedMessage id={label} />
                 </span>
             </label>
-            <Input type={type} value={value} onChange={e => { setValue(e.target.value) }} />
+            <Input className={className} type={type} value={value} onChange={e => { setValue(e.target.value) }} />
         </div>
     );
 };
