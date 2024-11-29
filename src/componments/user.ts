@@ -12,7 +12,7 @@ export default class User {
     public username: string
     public password: string | undefined
     public token: string | undefined
-    public detail?: Detail[]
+    public details?: Detail[]
     private baseUrl: string = "http://localhost:8080"
     public connected: boolean = false
 
@@ -137,7 +137,7 @@ export default class User {
                 this.connected = false
                 setToast("connection_timeout")
             }, interval + limit)
-            this.detail = message.detail
+            this.details = message.details
         })
     }
 }
