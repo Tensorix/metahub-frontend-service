@@ -2,7 +2,7 @@ import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
-import { HeartbeatRequest } from "@/gen/proto/v1/notify/heartbeat"
+import { Detail, HeartbeatRequest } from "@/gen/proto/v1/notify/heartbeat"
 import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Dispatch, SetStateAction } from "react"
@@ -12,8 +12,9 @@ export default class User {
     public username: string
     public password: string | undefined
     public token: string | undefined
+    public detail?: Detail[]
     private baseUrl: string = "http://localhost:8080"
-    private connected: boolean = false
+    public connected: boolean = false
 
     constructor(cookie: { [x: string]: string });
     constructor(username: string, password: string);
@@ -119,15 +120,24 @@ export default class User {
                 setToast("network_error")
                 return
             }
+            switch (message.result) {
+                case CheckResult.UNSPECIFIED:
+                    setToast("unspecified_error")
+                    return
+                case CheckResult.SUCCESS:
+                    break
+                case CheckResult.FAILED:
+                    navigate("/auth/login")
+                    return
+            }
             this.connected = true
             const interval = message.interval
             clearTimeout(timeoutid)
             timeoutid = setTimeout(() => {
                 this.connected = false
                 setToast("connection_timeout")
-            }, interval + limit);
-            console.log(message.detail)
-            console.log(message.result)
+            }, interval + limit)
+            this.detail = message.detail
         })
     }
 }
