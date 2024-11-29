@@ -2,6 +2,8 @@ import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
+import { HeartbeatRequest } from "@/gen/proto/v1/notify/heartbeat"
+import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Dispatch, SetStateAction } from "react"
 import { NavigateFunction } from "react-router"
@@ -11,20 +13,21 @@ export default class User {
     public password: string | undefined
     public token: string | undefined
     private baseUrl: string = "http://localhost:8080"
+    private connected: boolean = false
 
-    constructor(cookie:{[x: string]: string});
-    constructor(username: string,password: string);
-    constructor(userOrCookie: string | {[x: string]: string}, password?: string){
+    constructor(cookie: { [x: string]: string });
+    constructor(username: string, password: string);
+    constructor(userOrCookie: string | { [x: string]: string }, password?: string) {
         if (typeof userOrCookie == 'string' && password != undefined) {
             const username: string = userOrCookie
             this.username = username
             this.password = password
             return
         }
-        const cookie = userOrCookie as {[x: string]: string}
+        const cookie = userOrCookie as { [x: string]: string }
         const username = cookie["username"]
-        const token  = cookie["token"]
-        if(username == undefined || token == undefined || token == "undefined"){
+        const token = cookie["token"]
+        if (username == undefined || token == undefined || token == "undefined") {
             this.username = ""
             this.token = undefined
             return
@@ -33,8 +36,8 @@ export default class User {
         this.token = token
     }
 
-    public async Login(): Promise<LoginResult>{
-        if(this.password == undefined){
+    public async Login(): Promise<LoginResult> {
+        if (this.password == undefined) {
             return LoginResult.FAILED
         }
         const transport = new GrpcWebFetchTransport({
@@ -44,15 +47,15 @@ export default class User {
         const request: LoginRequest = { username: this.username, password: this.password }
         const { response } = await client.login(request)
         const result = response.result
-        if(result == LoginResult.SUCCESS){
+        if (result == LoginResult.SUCCESS) {
             this.password = ""
             this.token = response.token
         }
         return result
     }
 
-    public async Register(): Promise<RegisterResult>{
-        if(this.password == undefined){
+    public async Register(): Promise<RegisterResult> {
+        if (this.password == undefined) {
             return RegisterResult.VALUE_NULL
         }
         const transport = new GrpcWebFetchTransport({
@@ -63,9 +66,9 @@ export default class User {
         const { response } = await client.register(request)
         return response.result
     }
-    
-    public AuthCheck(setToast: Dispatch<SetStateAction<string>>,navigate :NavigateFunction){
-        if(this.token == undefined){
+
+    public AuthCheck(setToast: Dispatch<SetStateAction<string>>, navigate: NavigateFunction) {
+        if (this.token == undefined) {
             navigate("/auth/login")
             return
         }
@@ -73,13 +76,13 @@ export default class User {
             baseUrl: this.baseUrl
         });
         const client = new AuthServiceClient(transport)
-        const request: CheckRequest = {token: this.token}
+        const request: CheckRequest = { token: this.token }
         let response = client.check(request)
-        response.status.catch((e)=>{
+        response.status.catch((e) => {
             setToast("network_error")
             return
         })
-        response.then(({response})=>{
+        response.then(({ response }) => {
             const result = response.result
             let redirect = true
             switch (result) {
@@ -91,9 +94,40 @@ export default class User {
                 case CheckResult.FAILED:
                     break
             }
-            if(redirect){
+            if (redirect) {
                 navigate("/auth/login")
             }
+        })
+    }
+    public Heartbeat(setToast: Dispatch<SetStateAction<string>>, navigate: NavigateFunction) {
+        if (this.token == undefined) {
+            navigate("/auth/login")
+            return
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new NotifyServiceClient(transport)
+        const request: HeartbeatRequest = { token: this.token }
+        const streamcall = client.heartbeat(request)
+        const limit = 1000
+        let timeoutid = setTimeout(() => {
+            setToast("connection_timeout")
+        }, limit);
+        streamcall.responses.onNext((message, error, complete) => {
+            if (error != undefined || message == undefined || complete) {
+                setToast("network_error")
+                return
+            }
+            this.connected = true
+            const interval = message.interval
+            clearTimeout(timeoutid)
+            timeoutid = setTimeout(() => {
+                this.connected = false
+                setToast("connection_timeout")
+            }, interval + limit);
+            console.log(message.detail)
+            console.log(message.result)
         })
     }
 }
