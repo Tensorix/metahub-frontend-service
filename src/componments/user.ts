@@ -100,7 +100,9 @@ export default class User {
             }
         })
     }
-    public Heartbeat(setToast: Dispatch<SetStateAction<string>>, navigate: NavigateFunction) {
+    public Heartbeat(setToast: Dispatch<SetStateAction<string>>,
+        navigate: NavigateFunction,
+        setStatus: Dispatch<SetStateAction<"error" | "success" | "warning">>) {
         if (this.token == undefined) {
             navigate("/auth/login")
             return
@@ -137,7 +139,15 @@ export default class User {
                 this.connected = false
                 setToast("connection_timeout")
             }, interval + limit)
-            this.details = message.details
+            const details = message.details
+            this.details = details
+            let connected = 0
+            details.forEach(detail => {
+                if (detail.connected) ++connected
+            });
+            if (connected == 0) setStatus("error")
+            else if (connected == details.length) setStatus("success")
+            else setStatus("warning")
         })
     }
 }
