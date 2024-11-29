@@ -15,8 +15,8 @@ function RegisterPage() {
             <div className="flex items-center flex-col space-y-2 w-1/6">
                 <Logo size="normal" variant="squircle"/>
                 <div className="text-4xl"><FormattedMessage id="register" /></div>
-                <LoInput label="username" value={username} setValue={setUsername} />
-                <LoInput type="password" label="password" value={password} setValue={setPassword} />
+                <LoInput className="w-full" label="username" value={username} setValue={setUsername} />
+                <LoInput className="w-full" type="password" label="password" value={password} setValue={setPassword} />
                 <LoButton color="primary" value="register" onClick={() => Register(username, password, setToast)} />
             </div>
             <LoToast value={toast} setValue={setToast} />
