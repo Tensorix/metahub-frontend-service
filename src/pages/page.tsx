@@ -11,7 +11,8 @@ function HomePage() {
     const navigate = useNavigate()
     useEffect(()=>{
         user.AuthCheck(setToast, navigate)
-    })
+        user.Heartbeat(setToast, navigate)
+    }, [])
 
     return (
         <div>
