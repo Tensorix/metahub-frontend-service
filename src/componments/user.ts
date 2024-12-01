@@ -116,15 +116,18 @@ export default class User {
         const limit = 1000
         let timeoutid = setTimeout(() => {
             setToast("connection_timeout")
+            setStatus("error")
         }, limit);
         streamcall.responses.onNext((message, error, complete) => {
             if (error != undefined || message == undefined || complete) {
                 setToast("network_error")
+                setStatus("error")
                 return
             }
             switch (message.result) {
                 case CheckResult.UNSPECIFIED:
                     setToast("unspecified_error")
+                    setStatus("error")
                     return
                 case CheckResult.SUCCESS:
                     break
