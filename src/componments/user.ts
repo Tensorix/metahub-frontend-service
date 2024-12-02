@@ -2,7 +2,7 @@ import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
-import { Detail, HeartbeatRequest } from "@/gen/proto/v1/notify/heartbeat"
+import { Detail } from "@/gen/proto/v1/notify/heartbeat"
 import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Dispatch, SetStateAction } from "react"
@@ -111,7 +111,7 @@ export default class User {
             baseUrl: this.baseUrl
         })
         const client = new NotifyServiceClient(transport)
-        const request: HeartbeatRequest = { token: this.token }
+        const request: CheckRequest = { token: this.token }
         const streamcall = client.heartbeat(request)
         const limit = 1000
         let timeoutid = setTimeout(() => {
