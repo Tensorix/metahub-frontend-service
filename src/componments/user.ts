@@ -23,7 +23,7 @@ export default class User {
     public token: string | undefined
     public details?: Detail[]
     private baseUrl: string = "http://localhost:8080"
-    public connected: boolean = false
+    public connected: number = 0
     public friends: Friend[] = []
 
     constructor(cookie: { [x: string]: string });
@@ -145,21 +145,20 @@ export default class User {
                     navigate("/auth/login")
                     return
             }
-            this.connected = true
+            this.connected = 0
             const interval = message.interval
             clearTimeout(timeoutid)
             timeoutid = setTimeout(() => {
-                this.connected = false
+                this.connected = 0
                 setToast("connection_timeout")
             }, interval + limit)
             const details = message.details
             this.details = details
-            let connected = 0
             details.forEach(detail => {
-                if (detail.connected) ++connected
+                if (detail.connected) ++this.connected
             });
-            if (connected == 0) setStatus("error")
-            else if (connected == details.length) setStatus("success")
+            if (this.connected == 0) setStatus("error")
+            else if (this.connected == details.length) setStatus("success")
             else setStatus("warning")
         })
     }
