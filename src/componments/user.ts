@@ -2,11 +2,20 @@ import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
+import { FriendServiceClient } from "@/gen/proto/v1/friend/friend.client"
+import { FriendListRequest, FriendListResponse } from "@/gen/proto/v1/friend/get"
 import { Detail } from "@/gen/proto/v1/notify/heartbeat"
 import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import { Dispatch, SetStateAction } from "react"
 import { NavigateFunction } from "react-router"
+
+interface Friend {
+    tag: string
+    user_id: bigint
+    nickname: string
+    remark: string
+}
 
 export default class User {
     public username: string
@@ -15,6 +24,7 @@ export default class User {
     public details?: Detail[]
     private baseUrl: string = "http://localhost:8080"
     public connected: boolean = false
+    public friends: Friend[] = []
 
     constructor(cookie: { [x: string]: string });
     constructor(username: string, password: string);
@@ -152,5 +162,49 @@ export default class User {
             else if (connected == details.length) setStatus("success")
             else setStatus("warning")
         })
+    }
+    public async GetFriendList(setToast: Dispatch<SetStateAction<string>>,
+        navigate: NavigateFunction): Promise<boolean> {
+        if (this.token == undefined) {
+            navigate("/auth/login")
+            return false
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new FriendServiceClient(transport)
+        const request: FriendListRequest = { token: this.token }
+        let response: FriendListResponse
+        try{
+            response = await client.getFriendList(request).response
+        }
+        catch(e){
+            setToast("network_error")
+            return false
+        }
+        const result = response.result
+        switch (result) {
+            case CheckResult.UNSPECIFIED:
+                setToast("unspecified_error")
+                return false
+            case CheckResult.SUCCESS:
+                break
+            case CheckResult.FAILED:
+                navigate("/auth/login")
+                return false
+        }
+        const friendList = response.friendList
+        this.friends = []
+        friendList.forEach(friends => {
+            friends.friends.forEach(friend => {
+                this.friends.push({
+                    tag: friends.accountTag,
+                    user_id: friend.userId,
+                    nickname: friend.nickname,
+                    remark: friend.remark
+                })
+            })
+        })
+        return true
     }
 }
