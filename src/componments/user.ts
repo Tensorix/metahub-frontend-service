@@ -153,13 +153,13 @@ export default class User {
                 setToast("connection_timeout")
             }, interval + limit)
             const details = message.details
-            this.details = details
             details.forEach(detail => {
                 if (detail.connected) ++this.connected
             });
             if (this.connected == 0) setStatus("error")
             else if (this.connected == details.length) setStatus("success")
             else setStatus("warning")
+            this.details = details
         })
     }
     public async GetFriendList(setToast: Dispatch<SetStateAction<string>>,
