@@ -6,7 +6,7 @@ export async function Login(username: string, password: string, navigate: any,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setToast: React.Dispatch<React.SetStateAction<string>>) {
     setLoading(true)
-    const user = new User(username, password)
+    const user = new User(navigate,setToast,username, password)
     let result: LoginResult
     try {
         result = await user.Login()

@@ -4,7 +4,7 @@ import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { FriendServiceClient } from "@/gen/proto/v1/friend/friend.client"
 import { FriendListRequest, FriendListResponse } from "@/gen/proto/v1/friend/get"
-import { Message } from "@/gen/proto/v1/notify/friendmessage"
+import { FriendMessageResponse } from "@/gen/proto/v1/message/friend"
 import { Detail } from "@/gen/proto/v1/notify/heartbeat"
 import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { InboxProps } from "@/layout/inbox"
@@ -16,7 +16,7 @@ interface Friend {
     user_id: bigint
     nickname: string
     remark: string
-    messages: Message[]
+    messages: FriendMessageResponse[]
 }
 
 interface Account {
@@ -216,7 +216,7 @@ export default class User {
                     messages: []
                 })
                 this.inbox.push({
-                    uid: friend.userId,
+                    friend_id: friend.userId,
                     nickname: friend.nickname,
                     tag: account.tag,
                     timestamp: 0,

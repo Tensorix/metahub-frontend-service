@@ -1,8 +1,9 @@
 import User from "@/componments/user";
 import { RegisterResult } from "@/gen/proto/v1/auth/register";
+import { NavigateFunction } from "react-router";
 
-export async function Register(username: string, password: string, setToast: React.Dispatch<React.SetStateAction<string>>) {
-    const user = new User(username, password)
+export async function Register(username: string, password: string, navigate: NavigateFunction, setToast: React.Dispatch<React.SetStateAction<string>>) {
+    const user = new User(navigate, setToast, username, password)
     let result: RegisterResult
     try {
         result = await user.Register()
