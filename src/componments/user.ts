@@ -4,12 +4,16 @@ import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { FriendServiceClient } from "@/gen/proto/v1/friend/friend.client"
 import { FriendListRequest, FriendListResponse } from "@/gen/proto/v1/friend/get"
-import { FriendMessageResponse } from "@/gen/proto/v1/message/friend"
+import { Message, MessageType } from "@/gen/proto/v1/friend/message"
+import { SendRequest, SendResponse } from "@/gen/proto/v1/friend/send"
+import { FriendMessageResponse } from "@/gen/proto/v1/notify/friendmessage"
 import { Detail } from "@/gen/proto/v1/notify/heartbeat"
 import { NotifyServiceClient } from "@/gen/proto/v1/notify/notify.client"
 import { InboxProps } from "@/layout/inbox"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
+import moment from "moment"
 import { Dispatch, SetStateAction } from "react"
+import { FaLess } from "react-icons/fa"
 import { NavigateFunction } from "react-router"
 
 interface Friend {
@@ -35,6 +39,8 @@ export default class User {
     public accounts: Account[] = []
     public navigate: NavigateFunction
     public setToast: Dispatch<SetStateAction<string>>
+    public currentFriendId: bigint = 0n
+    public currentTag: string = ""
 
     constructor(navigate: NavigateFunction, setToast: Dispatch<SetStateAction<string>>, cookie: { [x: string]: string });
     constructor(navigate: NavigateFunction, setToast: Dispatch<SetStateAction<string>>, username: string, password: string);
@@ -248,12 +254,12 @@ export default class User {
             let count = 0
             this.accounts.forEach(account => {
                 account.friends.forEach(friend => {
-                    if(friend.user_id == message.friendId){
+                    if (friend.user_id == message.friendId) {
                         friend.messages.push(message)
                     }
                     friend.messages.forEach(message => {
-                        if(!message.readMark) ++count
-                    });
+                        if (!message.readMark) ++count
+                    })
                 })
             })
             setCount(count)
@@ -263,11 +269,97 @@ export default class User {
                     this.inbox.splice(i, 1)
                     this.inbox.unshift(box)
                     box.messages = message.messages
-                    box.timestamp = message.timestamp
+                    box.timestamp = Number(message.timestamp)
                     ++box.count
                 }
             }
             setInbox([...this.inbox])
         })
+    }
+
+    public async Send(text: string, setInbox: React.Dispatch<React.SetStateAction<InboxProps[]>>, setMessages: React.Dispatch<React.SetStateAction<FriendMessageResponse[]>>) {
+        if (this.token == undefined) {
+            this.navigate("/auth/login")
+            return
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new FriendServiceClient(transport)
+        const check_request: CheckRequest = {
+            token: this.token
+        }
+        const encoder = new TextEncoder()
+        const messages = [{
+            type: MessageType.TEXT,
+            content: encoder.encode(text)
+        }]
+        const request: SendRequest = {
+            token: check_request,
+            accountTag: this.currentTag,
+            friendId: this.currentFriendId,
+            messages: messages
+        }
+        const response = client.send(request)
+
+
+        response.status.catch((e) => {
+            this.setToast("network_error")
+            return
+        })
+        response.then(({ response }) => {
+            const result = response.result
+            let redirect = true
+            switch (result) {
+                case CheckResult.UNSPECIFIED:
+                    break
+                case CheckResult.SUCCESS:
+                    redirect = false
+                    break
+                case CheckResult.FAILED:
+                    break
+            }
+        })
+        this.inbox.forEach(box => {
+            if (box.friend_id == this.currentFriendId) {
+                box.messages = messages
+                box.timestamp = moment().unix()
+            }
+        });
+        this.accounts.forEach(account => {
+            account.friends.forEach(friend => {
+                if (friend.user_id == this.currentFriendId) {
+                    friend.messages.push({
+                        result: CheckResult.SUCCESS,
+                        friendId: this.currentFriendId,
+                        selfMessage: true,
+                        messageId: 0n,
+                        timestamp: BigInt(moment().unix()),
+                        readMark: true,
+                        hide: false,
+                        revoke: false,
+                        messages: messages
+                    })
+                }
+            })
+        })
+        response.then(({ response }) => {
+            const result = response.result
+            let redirect = true
+            switch (result) {
+                case CheckResult.UNSPECIFIED:
+                    break
+                case CheckResult.SUCCESS:
+                    redirect = false
+                    break
+                case CheckResult.FAILED:
+                    this.setToast("send_failed")
+                    break
+            }
+            if (redirect) {
+                this.navigate("/auth/login")
+            }
+        })
+        setInbox([...this.inbox])
     }
 }

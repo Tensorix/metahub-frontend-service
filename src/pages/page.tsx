@@ -9,13 +9,16 @@ import { Button } from "react-daisyui"
 import { LoInput } from "@/layout/input"
 import { MdSend } from "react-icons/md"
 import { Message } from "@/layout/message"
-import { FriendMessageResponse } from "@/gen/proto/v1/message/friend"
+import { FriendMessageResponse } from "@/gen/proto/v1/notify/friendmessage"
 
-function showMessages(user: User, friendId: bigint, setMessages: React.Dispatch<React.SetStateAction<FriendMessageResponse[]>>){
+function showMessages(user: User, friendId: bigint,
+    setMessages: React.Dispatch<React.SetStateAction<FriendMessageResponse[]>>) {
     user.accounts.forEach(account => {
         account.friends.forEach(friend => {
             if (friend.user_id == friendId) {
                 setMessages(friend.messages)
+                user.currentFriendId = friend.user_id
+                user.currentTag = account.tag
             }
         })
     })
@@ -63,7 +66,7 @@ function HomePage() {
                             key={i} nickname={prop.nickname}
                             timestamp={prop.timestamp} messages={prop.messages}
                             tag={prop.tag} count={prop.count}
-                            onClick={() => showMessages(user.current,prop.friend_id,setMessages)} />
+                            onClick={() => showMessages(user.current, prop.friend_id, setMessages)} />
                     )}
                 </div>
             </div>
@@ -75,7 +78,7 @@ function HomePage() {
                 </div>
                 <div className="w-full p-3 flex flex-row items-end">
                     <LoInput className="w-full grow" label="input_message" value={buffer} setValue={setBuffer} />
-                    <Button color="primary">
+                    <Button color="primary" onClick={() => {setBuffer("");user.current.Send(buffer, setInbox, setMessages)}}>
                         <MdSend />
                     </Button>
                 </div>

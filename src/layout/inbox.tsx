@@ -1,4 +1,4 @@
-import { Message, MessageType } from '@/gen/proto/v1/message/friend';
+import { Message, MessageType } from '@/gen/proto/v1/friend/message';
 import moment from 'moment';
 import React from 'react';
 import { Badge, Button, Indicator } from 'react-daisyui';
