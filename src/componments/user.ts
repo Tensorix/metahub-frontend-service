@@ -228,4 +228,46 @@ export default class User {
         })
         return true
     }
+
+    public GetMessage(setInbox: Dispatch<SetStateAction<InboxProps[]>>, setCount: Dispatch<SetStateAction<number>>) {
+        if (this.token == undefined) {
+            this.navigate("/auth/login")
+            return
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new NotifyServiceClient(transport)
+        const request: CheckRequest = { token: this.token }
+        const streamcall = client.friendMessage(request)
+        streamcall.responses.onNext((message, error, complete) => {
+            if (error != undefined || message == undefined || complete) {
+                this.setToast("network_error")
+                return
+            }
+            let count = 0
+            this.accounts.forEach(account => {
+                account.friends.forEach(friend => {
+                    if(friend.user_id == message.friendId){
+                        friend.messages.push(message)
+                    }
+                    friend.messages.forEach(message => {
+                        if(!message.readMark) ++count
+                    });
+                })
+            })
+            setCount(count)
+            for (let i = 0; i < this.inbox.length; i++) {
+                const box = this.inbox[i];
+                if (box.friend_id == message.friendId) {
+                    this.inbox.splice(i, 1)
+                    this.inbox.unshift(box)
+                    box.messages = message.messages
+                    box.timestamp = message.timestamp
+                    ++box.count
+                }
+            }
+            setInbox([...this.inbox])
+        })
+    }
 }
