@@ -21,7 +21,11 @@ export abstract class Localization {
         inbox: "Inbox",
         status: "Status",
         connection_timeout: "Connection timeout",
-        input_message: "Input message"
+        input_message: "Input message",
+        theme: "Theme",
+        light: "Light",
+        dark: "Dark",
+        cyberpunk: "Cyberpunk",
     }
 
     public static zh = {
@@ -46,7 +50,12 @@ export abstract class Localization {
         inbox: "收件箱",
         status: "状态",
         connection_timeout: "连接超时",
-        input_message: "输入消息"
+        input_message: "输入消息",
+        theme: "主题",
+        light: "明亮",
+        dark: "黑暗",
+        cyberpunk: "赛博朋克",
+        
     }
 
     public static getLangData(cookie: { [x: string]: string }) {
