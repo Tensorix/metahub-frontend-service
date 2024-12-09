@@ -24,8 +24,7 @@ export abstract class Localization {
         input_message: "Input message",
         theme: "Theme",
         light: "Light",
-        dark: "Dark",
-        cyberpunk: "Cyberpunk",
+        dark: "Dark"
     }
 
     public static zh = {
@@ -54,8 +53,6 @@ export abstract class Localization {
         theme: "主题",
         light: "明亮",
         dark: "黑暗",
-        cyberpunk: "赛博朋克",
-        
     }
 
     public static getLangData(cookie: { [x: string]: string }) {
