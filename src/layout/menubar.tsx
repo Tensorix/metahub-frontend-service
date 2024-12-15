@@ -1,5 +1,5 @@
 import { Button, Menu } from "react-daisyui"
-import { MdHome, MdSettings } from "react-icons/md"
+import { MdAccountBox, MdHome, MdSettings } from "react-icons/md"
 import { useLocation, useNavigate } from "react-router"
 
 interface MenubarProp {
@@ -20,15 +20,19 @@ export const Menubar: React.FC<MenubarProp> = ({ children }) => {
             pathname: "/",
             icon: <MdHome />
         }, {
+            pathname: "/accounts",
+            icon: <MdAccountBox />
+        }, {
             pathname: "/settings",
             icon: <MdSettings />
-        }]
+        }
+    ]
     return (
         <div className="flex flex-row h-screen">
             <Menu>
                 {info.map((element, i) =>
                     <Menu.Item key={i}>
-                        <Button className='text-xl' color={element.pathname == pathname ? "neutral": "ghost"} onClick={() => { navigate(element.pathname) }}>
+                        <Button className='text-xl' color={element.pathname == pathname ? "neutral" : "ghost"} onClick={() => { navigate(element.pathname) }}>
                             {element.icon}
                         </Button>
                     </Menu.Item>

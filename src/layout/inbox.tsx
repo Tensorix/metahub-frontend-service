@@ -11,9 +11,10 @@ export interface InboxProps {
     tag: string
     count: number
     onClick?: React.MouseEventHandler<HTMLButtonElement>
+    selected: boolean
 }
 
-export const Inbox: React.FC<InboxProps> = ({ nickname, timestamp, messages, tag, count, onClick }) => {
+export const Inbox: React.FC<InboxProps> = ({ nickname, timestamp, messages, tag, count, onClick, selected }) => {
     let rawmsg = ""
     messages.forEach(message => {
         switch (message.type) {
@@ -29,7 +30,7 @@ export const Inbox: React.FC<InboxProps> = ({ nickname, timestamp, messages, tag
     });
     return (
         <Indicator className="w-full">
-            <Button className='h-auto' color="ghost" fullWidth onClick={onClick}>
+            <Button className='h-auto' color={selected ? "neutral" : "ghost"} fullWidth onClick={onClick}>
                 {count != 0 &&
                     <Badge color="secondary" className={Indicator.Item.className()}>
                         {count}

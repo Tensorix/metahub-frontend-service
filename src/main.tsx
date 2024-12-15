@@ -9,6 +9,7 @@ import RegisterPage from './pages/auth/register/page'
 import SettingsPage from './pages/settings/page'
 import { LoIntl } from './layout/intl'
 import { ThemeProvider } from './layout/themeprovider'
+import AccountsPage from './pages/accounts/page'
 
 createRoot(document.getElementById('root')!).render(
     // <StrictMode>
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
                     <Route path='/auth/login' element={<Menubar><LoginPage /></Menubar>} />
                     <Route path='/auth/register' element={<Menubar><RegisterPage /></Menubar>} />
                     <Route path='/settings' element={<Menubar><SettingsPage /></Menubar>} />
+                    <Route path='/accounts' element={<Menubar><AccountsPage /></Menubar>} />
                 </Routes>
             </BrowserRouter>
         </LoIntl>

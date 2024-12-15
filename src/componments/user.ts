@@ -1,3 +1,7 @@
+import { AccountServiceClient } from "@/gen/proto/v1/account/account.client"
+import { AddAccountRequest, AddAccountResult } from "@/gen/proto/v1/account/add"
+import { AccountData, QueryAccountRequest, QueryAccountResult } from "@/gen/proto/v1/account/query"
+import { RemoveAccountRequest, RemoveAccountResult } from "@/gen/proto/v1/account/remove"
 import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
 import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
@@ -15,6 +19,7 @@ import moment from "moment"
 import { Dispatch, SetStateAction } from "react"
 import { NavigateFunction } from "react-router"
 
+
 interface Friend {
     user_id: bigint
     nickname: string
@@ -27,6 +32,14 @@ interface Account {
     friends: Friend[]
 }
 
+export interface AccountProps {
+    id: number
+    account_tag: string
+    ip: string
+    port: number
+    editable: boolean
+}
+
 export default class User {
     public username: string
     public password: string | undefined
@@ -36,6 +49,7 @@ export default class User {
     public connected: number = 0
     public inbox: InboxProps[] = []
     public accounts: Account[] = []
+    public accountProps: AccountProps[] = []
     public navigate: NavigateFunction
     public setToast: Dispatch<SetStateAction<string>>
     public currentFriendId: bigint = 0n
@@ -226,7 +240,8 @@ export default class User {
                     tag: account.tag,
                     timestamp: 0,
                     count: 0,
-                    messages: []
+                    messages: [],
+                    selected: false
                 })
             })
             this.accounts.push(account)
@@ -301,19 +316,16 @@ export default class User {
         }
         const response = client.send(request)
 
-
         response.status.catch((e) => {
             this.setToast("network_error")
             return
         })
         response.then(({ response }) => {
             const result = response.result
-            let redirect = true
             switch (result) {
                 case CheckResult.UNSPECIFIED:
                     break
                 case CheckResult.SUCCESS:
-                    redirect = false
                     break
                 case CheckResult.FAILED:
                     break
@@ -360,5 +372,174 @@ export default class User {
             }
         })
         setInbox([...this.inbox])
+    }
+
+    public async QueryAccounts(): Promise<boolean> {
+        const props: AccountProps[] = []
+        if (this.token == undefined) {
+            this.navigate("/auth/login")
+            return false
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new AccountServiceClient(transport)
+        const check_request: CheckRequest = {
+            token: this.token
+        }
+        const request: QueryAccountRequest = {
+            token: check_request,
+        }
+        const { response } = await client.queryAccount(request)
+        const result = response.result
+        if (result == undefined) {
+            this.setToast("unspecified_error")
+            return false
+        }
+        switch (result.result) {
+            case CheckResult.UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case CheckResult.SUCCESS:
+                break
+            case CheckResult.FAILED:
+                this.navigate("/auth/login")
+                return false
+        }
+        switch (response.queryResult) {
+            case QueryAccountResult.UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case QueryAccountResult.SUCCESS:
+                const query_result = response.data
+                query_result.forEach(account => {
+                    props.push({
+                        id: account.id,
+                        account_tag: account.accountTag,
+                        ip: account.ip,
+                        port: account.port,
+                        editable: false
+                    })
+                })
+                this.accountProps = props
+                return true
+            case QueryAccountResult.FAILED:
+                this.setToast("query_failed")
+                return false
+        }
+    }
+    public async AddAccount(accountTag: string, ipAddress: string, port: number): Promise<boolean> {
+        if (this.token == undefined) {
+            this.navigate("/auth/login")
+            return false
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new AccountServiceClient(transport)
+        const check_request: CheckRequest = {
+            token: this.token
+        }
+        const add_data: AccountData = {
+            id: 0,
+            accountTag: accountTag,
+            ip: ipAddress,
+            port: port
+        }
+        const request: AddAccountRequest = {
+            token: check_request,
+            data: add_data
+        }
+        const { response } = await client.addAccount(request)
+        const result = response.result
+        if (result == undefined) {
+            this.setToast("unspecified_error")
+            return false
+        }
+        switch (result.result) {
+            case CheckResult.UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case CheckResult.SUCCESS:
+                break
+            case CheckResult.FAILED:
+                this.navigate("/auth/login")
+                return false
+        }
+        switch (response.addResult) {
+            case AddAccountResult.ADD_RESULT_UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case AddAccountResult.ADD_RESULT_SUCCESS:
+                this.setToast("add_success")
+                this.accountProps.push({
+                    id: response.id,
+                    account_tag: accountTag,
+                    ip: ipAddress,
+                    port: port,
+                    editable: false
+                })
+                return true
+            case AddAccountResult.ADD_RESULT_EXISTS:
+                this.setToast("field_already_exists")
+                return false
+            case AddAccountResult.ADD_RESULT_FAILED:
+                this.setToast("add_failed")
+                return false
+        }
+    }
+    public async RemoveAccount(id: number): Promise<boolean> {
+        if (this.token == undefined) {
+            this.navigate("/auth/login")
+            return false
+        }
+        const transport = new GrpcWebFetchTransport({
+            baseUrl: this.baseUrl
+        })
+        const client = new AccountServiceClient(transport)
+        const check_request: CheckRequest = {
+            token: this.token
+        }
+        const request: RemoveAccountRequest = {
+            token: check_request,
+            id: id
+        }
+        const { response } = await client.removeAccount(request)
+        const result = response.result
+        if (result == undefined) {
+            this.setToast("unspecified_error")
+            return false
+        }
+        switch (result.result) {
+            case CheckResult.UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case CheckResult.SUCCESS:
+                this.setToast("remove_success")
+                break
+            case CheckResult.FAILED:
+                this.navigate("/auth/login")
+                return false
+        }
+        switch (response.removeResult) {
+            case RemoveAccountResult.UNSPECIFIED:
+                this.setToast("unspecified_error")
+                return false
+            case RemoveAccountResult.SUCCESS:
+                this.setToast("remove_success")
+                for (let i = 0; i < this.accountProps.length; i++) {
+                    const prop = this.accountProps[i];
+                    if (prop.id == id) {
+                        this.accountProps.splice(i, 1)
+                    }
+                }
+                return true
+            case RemoveAccountResult.NOT_EXISTS:
+                this.setToast("field_not_exists")
+                return false
+            case RemoveAccountResult.FAILED:
+                this.setToast("remove_failed")
+                return false
+        }
     }
 }
