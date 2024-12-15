@@ -24,7 +24,20 @@ export abstract class Localization {
         input_message: "Input message",
         theme: "Theme",
         light: "Light",
-        dark: "Dark"
+        dark: "Dark",
+        uid: "UID",
+        account_tag: "Account Tag",
+        user_id: "User ID",
+        ip: "IP",
+        port: "Port",
+        action: "Action",
+        query_failed: "Query failed",
+        field_already_exists: "Field already exists",
+        field_not_exists: "Field not exists",
+        add_success: "Add success",
+        add_failed: "Add failed",
+        remove_success: "Remove success",
+        remove_failed: "Remove failed"
     }
 
     public static zh = {
@@ -53,6 +66,19 @@ export abstract class Localization {
         theme: "主题",
         light: "明亮",
         dark: "黑暗",
+        uid: "UID",
+        account_tag: "账号标签",
+        user_id: "用户ID",
+        ip: "IP",
+        port: "端口",
+        action: "动作",
+        query_failed: "查询失败",
+        field_already_exists: "字段已存在",
+        field_not_exists: "字段不存在",
+        add_success: "添加成功",
+        add_failed: "添加失败",
+        remove_success: "删除成功",
+        remove_failed: "删除失败"
     }
 
     public static getLangData(cookie: { [x: string]: string }) {
