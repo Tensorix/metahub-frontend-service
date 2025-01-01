@@ -1,12 +1,13 @@
 import User from "@/componments/user";
 import { LoginResult } from "@/gen/proto/v1/auth/login";
+import store from "store2";
 
-export async function Login(username: string, password: string, navigate: any,
-    setCookies: (name: string, value: string) => void,
+export async function Login(user: User,username: string, password: string, navigate: any,
     setLoading: React.Dispatch<React.SetStateAction<boolean>>,
     setToast: React.Dispatch<React.SetStateAction<string>>) {
     setLoading(true)
-    const user = new User(navigate,setToast,username, password)
+    user.username = username
+    user.password = password
     let result: LoginResult
     try {
         result = await user.Login()
@@ -28,8 +29,8 @@ export async function Login(username: string, password: string, navigate: any,
                 setLoading(false)
                 break
             }
-            setCookies("username", username)
-            setCookies("token", token)
+            store.set("username", username)
+            store.set("token", token)
             navigate("/")
             break
         case LoginResult.FAILED:

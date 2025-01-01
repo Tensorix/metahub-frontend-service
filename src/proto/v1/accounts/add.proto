@@ -3,7 +3,7 @@ syntax = "proto3";
 package proto.v1;
 
 import "proto/v1/auth/check.proto";
-import "proto/v1/account/query.proto";
+import "proto/v1/accounts/query.proto";
 
 enum AddAccountResult {
     ADD_RESULT_UNSPECIFIED = 0;

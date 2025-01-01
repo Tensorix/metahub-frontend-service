@@ -1,3 +1,5 @@
+import store from "store2"
+
 export abstract class Localization {
     public static en = {
         login: "Login",
@@ -37,7 +39,17 @@ export abstract class Localization {
         add_success: "Add success",
         add_failed: "Add failed",
         remove_success: "Remove success",
-        remove_failed: "Remove failed"
+        remove_failed: "Remove failed",
+        openai_endpoint: "OpenAI Endpoint",
+        openai_key: "OpenAI Key",
+        stt_endpoint: "STT Endpoint",
+        stt_key: "STT Key",
+        clear_all_data: "Clear all data",
+        friend_id: "Friend ID",
+        remark: "Remark",
+        friend_info: "Friend Info",
+        send_message: "Send Message",
+        friend_uid: "Friend UID"
     }
 
     public static zh = {
@@ -78,13 +90,24 @@ export abstract class Localization {
         add_success: "添加成功",
         add_failed: "添加失败",
         remove_success: "删除成功",
-        remove_failed: "删除失败"
+        remove_failed: "删除失败",
+        openai_endpoint: "OpenAI终结点",
+        openai_key: "OpenAI密钥",
+        stt_endpoint: "STT终结点",
+        stt_key: "STT密钥",
+        clear_all_data: "清除所有数据",
+        friend_id: "好友ID",
+        remark: "备注",
+        friend_info: "好友信息",
+        send_message: "发送消息",
+        friend_uid: "好友UID"
     }
 
-    public static getLangData(cookie: { [x: string]: string }) {
-        let lang = cookie["lang"]
-        if (lang == undefined || lang == "undefined") {
+    public static getLangData() {
+        let lang = store.get("lang")
+        if (lang == undefined) {
             lang = navigator.language
+            store.set("lang", lang)
         }
         switch (lang) {
             case "zh":

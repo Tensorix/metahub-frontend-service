@@ -17,12 +17,12 @@ enum QueryAccountResult {
     QUERY_ACCOUNT_RESULT_FAILED = 2;
 }
 
+message QueryAccountRequest {
+    CheckRequest token = 1;
+}
+
 message QueryAccountResponse {
     CheckResponse result = 1;
     QueryAccountResult query_result = 2;
     repeated AccountData data = 3;
-}
-
-message QueryAccountRequest {
-    CheckRequest token = 1;
 }

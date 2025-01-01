@@ -19,9 +19,6 @@ export const LoSelect: React.FC<LoSelectProp> = ({ options, label, value, setVal
                 </span>
             </label>
             <Select defaultValue={value} onChange={e => setValue(e.target.value)}>
-                <option disabled value="">
-                    <FormattedMessage id={label} />
-                </option>
                 {options.map((option, i) =>
                     <option value={option} key={i}>
                         <FormattedMessage id={option} />

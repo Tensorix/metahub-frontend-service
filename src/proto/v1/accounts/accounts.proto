@@ -2,13 +2,13 @@ syntax = "proto3";
 
 package proto.v1;
 
-import "proto/v1/account/query.proto";
-import "proto/v1/account/add.proto";
-import "proto/v1/account/remove.proto";
-import "proto/v1/account/modify.proto";
+import "proto/v1/accounts/query.proto";
+import "proto/v1/accounts/add.proto";
+import "proto/v1/accounts/remove.proto";
+import "proto/v1/accounts/modify.proto";
 import "proto/v1/auth/check.proto";
 
-service AccountService {
+service AccountsService {
   rpc AddAccount(AddAccountRequest) returns (AddAccountResponse) {}
   rpc RemoveAccount(RemoveAccountRequest) returns (RemoveAccountResponse) {}
   rpc QueryAccount(QueryAccountRequest) returns (QueryAccountResponse) {}

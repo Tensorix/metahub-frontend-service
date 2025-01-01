@@ -1,9 +1,9 @@
-import { AccountServiceClient } from "@/gen/proto/v1/account/account.client"
-import { AddAccountRequest, AddAccountResult } from "@/gen/proto/v1/account/add"
-import { AccountData, QueryAccountRequest, QueryAccountResult } from "@/gen/proto/v1/account/query"
-import { RemoveAccountRequest, RemoveAccountResult } from "@/gen/proto/v1/account/remove"
+import { AccountsServiceClient } from "@/gen/proto/v1/accounts/accounts.client"
+import { AddAccountRequest, AddAccountResult } from "@/gen/proto/v1/accounts/add"
+import { AccountData, QueryAccountRequest, QueryAccountResult } from "@/gen/proto/v1/accounts/query"
+import { RemoveAccountRequest, RemoveAccountResult } from "@/gen/proto/v1/accounts/remove"
 import { AuthServiceClient } from "@/gen/proto/v1/auth/auth.client"
-import { CheckRequest, CheckResult } from "@/gen/proto/v1/auth/check"
+import { CheckRequest, CheckResponse, CheckResult } from "@/gen/proto/v1/auth/check"
 import { LoginRequest, LoginResult } from "@/gen/proto/v1/auth/login"
 import { RegisterRequest, RegisterResult } from "@/gen/proto/v1/auth/register"
 import { FriendServiceClient } from "@/gen/proto/v1/friend/friend.client"
@@ -17,17 +17,22 @@ import { InboxProps } from "@/layout/inbox"
 import { GrpcWebFetchTransport } from "@protobuf-ts/grpcweb-transport"
 import moment from "moment"
 import { Dispatch, SetStateAction } from "react"
-import { NavigateFunction } from "react-router"
-
+import store from "store2"
+export enum UserStatus {
+    ERROR = "error",
+    WARNING = "warning",
+    SUCCESS = "success"
+}
 
 interface Friend {
-    user_id: bigint
+    friend_id: number
+    uid: bigint
     nickname: string
     remark: string
     messages: FriendMessageResponse[]
 }
 
-interface Account {
+export interface Account {
     tag: string
     friends: Friend[]
 }
@@ -41,40 +46,28 @@ export interface AccountProps {
 }
 
 export default class User {
-    public username: string
-    public password: string | undefined
+    public username: string = ""
+    public password?: string
     public token: string | undefined
     public details?: Detail[]
-    private baseUrl: string = "http://localhost:8080"
+    private baseUrl: string = "http://localhost:8080/"
     public connected: number = 0
     public inbox: InboxProps[] = []
     public accounts: Account[] = []
     public accountProps: AccountProps[] = []
-    public navigate: NavigateFunction
     public setToast: Dispatch<SetStateAction<string>>
-    public currentFriendId: bigint = 0n
+    public currentFriendId: number = 0
     public currentTag: string = ""
+    public setStatus: Dispatch<SetStateAction<UserStatus>>
+    public setOnline: Dispatch<SetStateAction<boolean | undefined>>
 
-    constructor(navigate: NavigateFunction, setToast: Dispatch<SetStateAction<string>>, cookie: { [x: string]: string });
-    constructor(navigate: NavigateFunction, setToast: Dispatch<SetStateAction<string>>, username: string, password: string);
-    constructor(navigate: NavigateFunction, setToast: Dispatch<SetStateAction<string>>, userOrCookie: string | { [x: string]: string }, password?: string) {
-        this.navigate = navigate
+    constructor(setOnline: Dispatch<SetStateAction<boolean | undefined>> ,setStatus: Dispatch<SetStateAction<UserStatus>>,setToast: Dispatch<SetStateAction<string>>) {
+        this.setOnline = setOnline
+        this.setStatus = setStatus
         this.setToast = setToast
-        if (typeof userOrCookie == 'string' && password != undefined) {
-            const username: string = userOrCookie
-            this.username = username
-            this.password = password
-            return
-        }
-        const cookie = userOrCookie as { [x: string]: string }
-        const username = cookie["username"]
-        const token = cookie["token"]
-        if (username == undefined || token == undefined || token == "undefined") {
-            this.username = ""
-            this.token = undefined
-            return
-        }
-        this.username = username
+        const token = store.get("token")
+        const username = store.get("username")
+        if (username != undefined) this.username = username
         this.token = token
     }
 
@@ -84,7 +77,7 @@ export default class User {
         }
         const transport = new GrpcWebFetchTransport({
             baseUrl: this.baseUrl
-        });
+        })
         const client = new AuthServiceClient(transport)
         const request: LoginRequest = { username: this.username, password: this.password }
         const { response } = await client.login(request)
@@ -92,6 +85,7 @@ export default class User {
         if (result == LoginResult.SUCCESS) {
             this.password = ""
             this.token = response.token
+            this.setOnline(true)
         }
         return result
     }
@@ -109,9 +103,9 @@ export default class User {
         return response.result
     }
 
-    public AuthCheck() {
+    public async AuthCheck() {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
+            this.setOnline(false)
             return
         }
         const transport = new GrpcWebFetchTransport({
@@ -119,31 +113,30 @@ export default class User {
         });
         const client = new AuthServiceClient(transport)
         const request: CheckRequest = { token: this.token }
-        let response = client.check(request)
-        response.status.catch((e) => {
-            this.setToast("network_error")
+        let res: CheckResponse
+        try {
+            let { response } = await client.check(request)
+            res = response
+        }
+        catch (e) {
+            this.setOnline(false)
             return
-        })
-        response.then(({ response }) => {
-            const result = response.result
-            let redirect = true
-            switch (result) {
-                case CheckResult.UNSPECIFIED:
-                    break
-                case CheckResult.SUCCESS:
-                    redirect = false
-                    break
-                case CheckResult.FAILED:
-                    break
-            }
-            if (redirect) {
-                this.navigate("/auth/login")
-            }
-        })
+        }
+        const result = res.result
+        switch (result) {
+            case CheckResult.UNSPECIFIED:
+                this.setOnline(false)
+                return
+            case CheckResult.SUCCESS:
+                this.setOnline(true)
+                return
+            case CheckResult.FAILED:
+                this.setOnline(false)
+                return
+        }
     }
-    public Heartbeat(setStatus: Dispatch<SetStateAction<"error" | "success" | "warning">>) {
+    public Heartbeat() {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
             return
         }
         const transport = new GrpcWebFetchTransport({
@@ -152,26 +145,27 @@ export default class User {
         const client = new NotifyServiceClient(transport)
         const request: CheckRequest = { token: this.token }
         const streamcall = client.heartbeat(request)
-        const limit = 1000
+        const limit = 3000
         let timeoutid = setTimeout(() => {
             this.setToast("connection_timeout")
-            setStatus("error")
-        }, limit);
+            this.setStatus(UserStatus.ERROR)
+        }, limit)
+
         streamcall.responses.onNext((message, error, complete) => {
             if (error != undefined || message == undefined || complete) {
                 this.setToast("network_error")
-                setStatus("error")
+                this.setStatus(UserStatus.ERROR)
                 return
             }
             switch (message.result) {
                 case CheckResult.UNSPECIFIED:
                     this.setToast("unspecified_error")
-                    setStatus("error")
+                    this.setStatus(UserStatus.ERROR)
                     return
                 case CheckResult.SUCCESS:
                     break
                 case CheckResult.FAILED:
-                    this.navigate("/auth/login")
+                    this.setOnline(false)
                     return
             }
             this.connected = 0
@@ -185,15 +179,14 @@ export default class User {
             details.forEach(detail => {
                 if (detail.connected) ++this.connected
             });
-            if (this.connected == 0) setStatus("error")
-            else if (this.connected == details.length) setStatus("success")
-            else setStatus("warning")
+            if (this.connected == 0) this.setStatus(UserStatus.ERROR)
+            else if (this.connected == details.length) this.setStatus(UserStatus.SUCCESS)
+            else this.setStatus(UserStatus.WARNING)
             this.details = details
         })
     }
     public async GetFriendList(): Promise<boolean> {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
             return false
         }
         const transport = new GrpcWebFetchTransport({
@@ -217,10 +210,11 @@ export default class User {
             case CheckResult.SUCCESS:
                 break
             case CheckResult.FAILED:
-                this.navigate("/auth/login")
+                this.setOnline(false)
                 return false
         }
         const friendList = response.friendList
+        const recordAccounts = this.accounts
         this.accounts = []
         friendList.forEach(friends => {
             let account: Account = {
@@ -229,29 +223,25 @@ export default class User {
             }
             friends.friends.forEach(friend => {
                 account.friends.push({
-                    user_id: friend.userId,
+                    friend_id: friend.userId,
+                    uid: friend.uid,
                     nickname: friend.nickname,
                     remark: friend.remark,
                     messages: []
                 })
-                this.inbox.push({
-                    friend_id: friend.userId,
-                    nickname: friend.nickname,
-                    tag: account.tag,
-                    timestamp: 0,
-                    count: 0,
-                    messages: [],
-                    selected: false
-                })
             })
             this.accounts.push(account)
         })
+        if (recordAccounts.length == this.accounts.length) {
+            this.accounts = recordAccounts
+        }
         return true
     }
 
-    public GetMessage(setInbox: Dispatch<SetStateAction<InboxProps[]>>, setCount: Dispatch<SetStateAction<number>>) {
+    public GetMessage(setInbox: Dispatch<SetStateAction<InboxProps[]>>,
+        setCount: Dispatch<SetStateAction<number>>, setGenerate: Dispatch<SetStateAction<boolean>>) {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
+            // this.navigate("/auth/login")
             return
         }
         const transport = new GrpcWebFetchTransport({
@@ -265,10 +255,14 @@ export default class User {
                 this.setToast("network_error")
                 return
             }
+            let exist = false
+
+            //add messages
             let count = 0
             this.accounts.forEach(account => {
                 account.friends.forEach(friend => {
-                    if (friend.user_id == message.friendId) {
+                    console.log("get_message friend_id:", friend.friend_id)
+                    if (friend.friend_id == message.friendId) {
                         friend.messages.push(message)
                     }
                     friend.messages.forEach(message => {
@@ -277,23 +271,47 @@ export default class User {
                 })
             })
             setCount(count)
+
+            // inbox exists
             for (let i = 0; i < this.inbox.length; i++) {
-                const box = this.inbox[i];
-                if (box.friend_id == message.friendId) {
+                const element = this.inbox[i];
+                if (message.friendId == element.friend_id) {
                     this.inbox.splice(i, 1)
-                    this.inbox.unshift(box)
-                    box.messages = message.messages
-                    box.timestamp = Number(message.timestamp)
-                    ++box.count
+                    this.inbox.unshift(element)
+                    ++element.count
+                    element.messages = message.messages
+                    element.timestamp = Number(message.timestamp)
+                    if (element.selected) setGenerate(generate => !generate)
+                    exist = true
+                    break
                 }
+            }
+
+            // inbox not exists
+            if (!exist) {
+                this.accounts.forEach(account => {
+                    account.friends.forEach(friend => {
+                        if (friend.friend_id == message.friendId) {
+                            this.inbox.push({
+                                friend_id: message.friendId,
+                                nickname: friend.nickname,
+                                remark: friend.remark,
+                                timestamp: Number(message.timestamp),
+                                messages: message.messages,
+                                tag: account.tag,
+                                count: 1,
+                                selected: false,
+                            })
+                        }
+                    })
+                })
             }
             setInbox([...this.inbox])
         })
     }
 
-    public async Send(text: string, setInbox: React.Dispatch<React.SetStateAction<InboxProps[]>>, setMessages: React.Dispatch<React.SetStateAction<FriendMessageResponse[]>>) {
+    public async Send(text: string, setMessages: React.Dispatch<React.SetStateAction<FriendMessageResponse[]>>) {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
             return
         }
         const transport = new GrpcWebFetchTransport({
@@ -328,18 +346,22 @@ export default class User {
                 case CheckResult.SUCCESS:
                     break
                 case CheckResult.FAILED:
+                    this.setOnline(false)
                     break
             }
         })
-        this.inbox.forEach(box => {
-            if (box.friend_id == this.currentFriendId) {
-                box.messages = messages
-                box.timestamp = moment().unix()
+        for (let i = 0; i < this.inbox.length; i++) {
+            const element = this.inbox[i];
+            if (element.friend_id == this.currentFriendId) {
+                element.messages = messages
+                element.timestamp = moment().unix()
+                this.inbox.splice(i, 1)
+                this.inbox.unshift(element)
             }
-        });
+        }
         this.accounts.forEach(account => {
             account.friends.forEach(friend => {
-                if (friend.user_id == this.currentFriendId) {
+                if (friend.friend_id == this.currentFriendId) {
                     friend.messages.push({
                         result: CheckResult.SUCCESS,
                         friendId: this.currentFriendId,
@@ -356,34 +378,33 @@ export default class User {
         })
         response.then(({ response }) => {
             const result = response.result
-            let redirect = true
+            // let redirect = true
             switch (result) {
                 case CheckResult.UNSPECIFIED:
                     break
                 case CheckResult.SUCCESS:
-                    redirect = false
+                    // redirect = false
                     break
                 case CheckResult.FAILED:
                     this.setToast("send_failed")
                     break
             }
-            if (redirect) {
-                this.navigate("/auth/login")
-            }
+            // if (redirect) {
+            //     this.navigate("/auth/login")
+            // }
         })
-        setInbox([...this.inbox])
     }
 
     public async QueryAccounts(): Promise<boolean> {
         const props: AccountProps[] = []
         if (this.token == undefined) {
-            this.navigate("/auth/login")
+            // this.navigate("/auth/login")
             return false
         }
         const transport = new GrpcWebFetchTransport({
             baseUrl: this.baseUrl
         })
-        const client = new AccountServiceClient(transport)
+        const client = new AccountsServiceClient(transport)
         const check_request: CheckRequest = {
             token: this.token
         }
@@ -403,7 +424,8 @@ export default class User {
             case CheckResult.SUCCESS:
                 break
             case CheckResult.FAILED:
-                this.navigate("/auth/login")
+                this.setOnline(false)
+                // this.navigate("/auth/login")
                 return false
         }
         switch (response.queryResult) {
@@ -430,13 +452,13 @@ export default class User {
     }
     public async AddAccount(accountTag: string, ipAddress: string, port: number): Promise<boolean> {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
+            // this.navigate("/auth/login")
             return false
         }
         const transport = new GrpcWebFetchTransport({
             baseUrl: this.baseUrl
         })
-        const client = new AccountServiceClient(transport)
+        const client = new AccountsServiceClient(transport)
         const check_request: CheckRequest = {
             token: this.token
         }
@@ -463,7 +485,7 @@ export default class User {
             case CheckResult.SUCCESS:
                 break
             case CheckResult.FAILED:
-                this.navigate("/auth/login")
+                // this.navigate("/auth/login")
                 return false
         }
         switch (response.addResult) {
@@ -490,13 +512,13 @@ export default class User {
     }
     public async RemoveAccount(id: number): Promise<boolean> {
         if (this.token == undefined) {
-            this.navigate("/auth/login")
+            // this.navigate("/auth/login")
             return false
         }
         const transport = new GrpcWebFetchTransport({
             baseUrl: this.baseUrl
         })
-        const client = new AccountServiceClient(transport)
+        const client = new AccountsServiceClient(transport)
         const check_request: CheckRequest = {
             token: this.token
         }
@@ -518,7 +540,7 @@ export default class User {
                 this.setToast("remove_success")
                 break
             case CheckResult.FAILED:
-                this.navigate("/auth/login")
+                // this.navigate("/auth/login")
                 return false
         }
         switch (response.removeResult) {

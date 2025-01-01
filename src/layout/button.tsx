@@ -5,12 +5,12 @@ import { FormattedMessage } from 'react-intl';
 interface LoButtonProps {
     className?: string
     color: "neutral" | "primary" | "secondary" | "accent" | "ghost" | "info" | "success" | "warning" | "error" | undefined
-    value: string
+    label: string
     onClick: React.MouseEventHandler
     disabled?: boolean
 }
 
-export const LoButton: React.FC<LoButtonProps> = ({ className, color, value, onClick, disabled }) => {
+export const LoButton: React.FC<LoButtonProps> = ({ className, color, label: value, onClick, disabled }) => {
     return (
         <Button className={className} color={color} onClick={onClick} disabled={disabled}>
             <FormattedMessage id={value} />

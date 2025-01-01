@@ -6,7 +6,7 @@ import { MdAdd, MdEdit, MdRemove } from "react-icons/md"
 import User from "@/componments/user"
 import { LoToast } from "@/layout/toast"
 import { useNavigate } from "react-router"
-import { useCookies } from "react-cookie"
+import { RouteArguments } from "@/layout/globalrouter"
 
 function query(user: User, _setAccounts: Dispatch<SetStateAction<AccountProps[]>>) {
     user.QueryAccounts().then(result => {
@@ -28,24 +28,20 @@ function add(user: User, addAccountTag: string, addIPAddress: string, addPort: s
 }
 
 function remove(user: User, id: number, _setAccounts: Dispatch<SetStateAction<AccountProps[]>>) {
-    console.log(id)
     user.RemoveAccount(id).then(result => {
         if(!result) return
         _setAccounts([...user.accountProps])
     })
 }
 
-function AccountsPage() {
-    const [cookies, _] = useCookies()
+export const AccountsPage: React.FC<RouteArguments> = ({ user }) => {
     const [addAccountTag, setAddAccountTag] = useState("")
     const [addIPAddress, setAddIPAddress] = useState("")
     const [addPort, setAddPort] = useState("")
     const [accounts, setAccounts] = useState([] as AccountProps[])
-    const navigate = useNavigate()
     const [toast, setToast] = useState("")
-    const user = useRef(new User(navigate, setToast, cookies))
     useEffect(() => {
-        query(user.current, setAccounts)
+        query(user, setAccounts)
     }, [])
 
     return (
@@ -58,20 +54,23 @@ function AccountsPage() {
                     <LoLabel size="text-lg" value="action" />
                 </Table.Head>
                 <Table.Body>
-                    {accounts.map((account, i) =>
-                        <Table.Row key={i}>
+                    {accounts.map((account, i) => {
+                        return  <Table.Row key={i}>
                             <span>{account.account_tag}</span>
                             <span>{account.ip}</span>
                             <span>{account.port}</span>
                             <span>
                                 {/* <Button size="xs">
-                                    <MdEdit />
+                                    <MdEdit onClick={()=>{
+                                        
+                                    }}/>
                                 </Button> */}
-                                <Button size="xs" onClick={()=>{remove(user.current, account.id, setAccounts)}}>
+                                <Button size="xs" onClick={()=>{remove(user, account.id, setAccounts)}}>
                                     <MdRemove />
                                 </Button>
                             </span>
                         </Table.Row>
+                    }
                     )}
                     <Table.Row>
                         <span>
@@ -85,7 +84,7 @@ function AccountsPage() {
                         </span>
                         <span>
                             <Button size="xs">
-                                <MdAdd onClick={() => { add(user.current, addAccountTag, addIPAddress, addPort, setAccounts) }} />
+                                <MdAdd onClick={() => { add(user, addAccountTag, addIPAddress, addPort, setAccounts) }} />
                             </Button>
                         </span>
                     </Table.Row>
@@ -95,5 +94,4 @@ function AccountsPage() {
         </div>
     )
 }
-
 export default AccountsPage

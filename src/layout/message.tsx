@@ -6,7 +6,7 @@ import { ChatBubble, Mask } from "react-daisyui"
 
 export const Message: React.FC<FriendMessageResponse> = ({ timestamp, messages, selfMessage, friendId, readMark }) => {
     readMark = true
-    const chat_time = moment.unix(Number(timestamp)).fromNow()
+    const chat_time = moment.unix(Number(timestamp)).locale("zh-cn").fromNow()
     const msg_body: JSX.Element[] = []
     messages.forEach(message => {
         switch (message.type) {
@@ -29,7 +29,7 @@ export const Message: React.FC<FriendMessageResponse> = ({ timestamp, messages, 
     })
     return (
         <ChatBubble end={selfMessage}>
-            <ChatBubble.Header>{friendId.toString()} <ChatBubble.Time>{chat_time}</ChatBubble.Time></ChatBubble.Header>
+            <ChatBubble.Header><ChatBubble.Time>{chat_time}</ChatBubble.Time></ChatBubble.Header>
             <ChatBubble.Message>
                 {...msg_body}
             </ChatBubble.Message>

@@ -1,11 +1,12 @@
+import { UserStatus } from '@/componments/user'
 import React from 'react'
-import { Badge, Button, Menu } from 'react-daisyui'
-import { MdInbox, MdInfo } from 'react-icons/md'
+import { Badge, Button, Menu, Tooltip } from 'react-daisyui'
+import { MdInbox, MdInfo, MdSync } from 'react-icons/md'
 import { FormattedMessage } from 'react-intl'
 
 interface ContactbarProp {
     inbox: number
-    status: "success" | "warning" | "error"
+    status: UserStatus
 }
 
 export const Contactbar: React.FC<ContactbarProp> = ({ inbox, status }) => {

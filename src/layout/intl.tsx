@@ -1,6 +1,5 @@
 import { Localization } from '@/localization';
 import React from 'react'
-import { useCookies } from 'react-cookie';
 import { IntlProvider } from 'react-intl'
 
 interface LoInputProps {
@@ -8,9 +7,8 @@ interface LoInputProps {
 }
 
 export const LoIntl: React.FC<LoInputProps> = ({ children }) => {
-    const [cookie, _] = useCookies()
     return (
-        <IntlProvider messages={Localization.getLangData(cookie)} locale="en">
+        <IntlProvider messages={Localization.getLangData()} locale="en">
             {children}
         </IntlProvider>
     );
